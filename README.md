@@ -1,5 +1,7 @@
 # pyhtelasso
 
+![](https://img.shields.io/badge/license-MIT-green)
+
 A Python package for detecting treatment effect heterogeneity in randomized experiments using debiased lasso regression.
 
 ## Installation
@@ -10,7 +12,7 @@ You can install the package using pip:
 pip install pyhtelasso
 ```
 
-**Note**: This package requires `econml>=0.13.0` for the DebiasedLasso implementation. The package will automatically install this dependency.`
+**Note**: This package requires `econml>=0.13.0` for the DebiasedLasso implementation. The package will automatically install this dependency.
 
 ## Features
 
@@ -52,13 +54,15 @@ print(detector.summary())
 
 You can find detailed usage examples in the `examples/` directory.
 
-## Background
+## Technical Details
 
 ### Motivation
 
 When studying heterogeneous treatment effects (HTE) in randomized experiments, researchers often suspect that only a few covariates truly moderate the effect of the treatment. Identifying these *moderators* is critical — whether for targeting, personalization, or scientific discovery.
 
-Lasso is a natural tool for this task. Lasso is often the go-to method for selecting a small set of variables "that matter." This work aims to extend that idea to the context of selecting treatment effect modifiers. It performs automatic variable selection in high-dimensional settings in a simple and transparent way, it scales well, and comes with theoretical guarantees. 
+> Lasso is often the go-to method for selecting a small set of variables "that matter." This work aims to extend that idea to the context of selecting treatment effect modifiers. 
+
+It performs automatic variable selection in high-dimensional settings in a simple and transparent way, it scales well, and comes with theoretical guarantees. 
 
 However, naively applying Lasso directly to treatment effect heterogeneity estimation is problematic:
 
@@ -70,14 +74,14 @@ However, naively applying Lasso directly to treatment effect heterogeneity estim
 
 ### Related Work
 
-Researchers have developed several sophisticated methods to address these challenges:
+Researchers have developed several sophisticated methods to address these challenges and still employ the Lasso in this context:
 
 * Imai and Ratkovic (2013) use a modified Lasso with structured penalties and group interactions.
 * Nie and Wager (2020) propose the R-learner, a powerful meta-learning approach that relies on orthogonalized loss functions and cross-fitting which can employ lasso.
 * Zhao et al. (2022) focus on FDR control by combining weighted outcomes lasso regression with a knockoff filter.
 * Bien et al. (2013) propose an interaction lasso which selects treatment variable interactions only if the main term also enters the model.
 
-While effective, these methods can be complex to implement and explain, as well as tune.
+While effective, these methods can be complex to communicate, implement, and tune.
 
 ---
 
@@ -92,7 +96,7 @@ This method is inspired by semiparametric theory and builds most closely on the 
 
 ---
 
-### Notation and Setting
+### Notation
 
 Suppose we observe a randomized experiment with $n$ units. For each unit $i = 1, \dots, n$, we observe:
 
@@ -135,8 +139,22 @@ To estimate $\beta$, we regress $Y^*$ on $X$ using the Debiased Lasso (also know
 Let $\widehat{\beta}_j$ denote the estimated coefficient on covariate $j$, and $\widehat{\sigma}_j$ its standard error. Then under suitable sparsity and design assumptions:
 
 * $\widehat{\beta}_j$ is asymptotically normal,
-* the z-statistic $Z_j = \widehat{\beta}_j / \widehat{\sigma}_j$ can be used to test for significance,
-* and covariates with significant $Z_j$ values are interpreted as moderators of the treatment effect.
+* the t-statistic $t_j = \widehat{\beta}_j / \widehat{\sigma}_j$ can be used to test for significance,
+* and covariates with significant $t_j$ values are interpreted as moderators of the treatment effect.
+
+---
+
+### Interpretation
+
+Let’s say you want to know whether age or income or gender moderate the effect of an intervention of interest. You apply methodology as above and estimate:
+
+$$
+\tau(x) = 0.3 \cdot \text{age} + 0 \cdot \text{income} + 1.1 \cdot \text{female}
+$$
+This tells you:
+
+* The treatment effect is larger for women and older individuals
+* But income is not a significant moderator.
 
 ---
 
@@ -145,10 +163,17 @@ Let $\widehat{\beta}_j$ denote the estimated coefficient on covariate $j$, and $
 The proposed approach overcomes the naive lasso limitations, while maintaining simplicity. It is:
 
 * Simple: No residualization, cross-fitting, or nested learners.
-* Valid inference: Debiased Lasso enables hypothesis testing with proper standard errors.
+* Valid inference: Debiased Lasso enables hypothesis testing with proper standard errors even when $p>n$.
 * Sparse discovery: Naturally selects a small number of likely moderators.
-* Flexible: Can be extended to interactions, group Lasso, or hierarchical penalties.
 
+---
+
+### Limitations
+
+* Noise: The method is inefficient because it does not fully utilize the information contained in the treatment indicator beyond its role in constructing the transformed outcome.
+* Multiple testing: In settings with many covariates the method is vulnerable to inflated type-1 errors. Consider combining with some type of multiple testing adjustment.
+
+---
 
 ## References
 

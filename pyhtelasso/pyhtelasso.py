@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
-import seaborn as sns
 from scipy import stats
 import warnings
 warnings.filterwarnings('ignore')

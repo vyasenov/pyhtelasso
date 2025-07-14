@@ -113,12 +113,13 @@ window.Quarto = {
 
 <section id="pyhtelasso" class="level1">
 <h1>pyhtelasso</h1>
+<p><img src="https://img.shields.io/badge/license-MIT-green.png" class="img-fluid"></p>
 <p>A Python package for detecting treatment effect heterogeneity in randomized experiments using debiased lasso regression.</p>
 <section id="installation" class="level2">
 <h2 class="anchored" data-anchor-id="installation">Installation</h2>
 <p>You can install the package using pip:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pyhtelasso</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Note</strong>: This package requires <code>econml&gt;=0.13.0</code> for the DebiasedLasso implementation. The package will automatically install this dependency.`</p>
+<p><strong>Note</strong>: This package requires <code>econml&gt;=0.13.0</code> for the DebiasedLasso implementation. The package will automatically install this dependency.</p>
 </section>
 <section id="features" class="level2">
 <h2 class="anchored" data-anchor-id="features">Features</h2>
@@ -132,38 +133,43 @@ window.Quarto = {
 <section id="quick-start" class="level2">
 <h2 class="anchored" data-anchor-id="quick-start">Quick Start</h2>
 <div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyhtelasso <span class="im">import</span> TreatmentHeterogeneityDetector, simulate_data</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyhtelasso <span class="im">import</span> HTELasso</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate data with heterogeneous treatment effects</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>X, y, t, true_moderators <span class="op">=</span> simulate_data(</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">1000</span>, p_features<span class="op">=</span><span class="dv">20</span>, p_het<span class="op">=</span><span class="dv">3</span>, </span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    treatment_prob<span class="op">=</span><span class="fl">0.4</span>, random_state<span class="op">=</span><span class="dv">42</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize and fit the detector</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>detector <span class="op">=</span> TreatmentHeterogeneityDetector(</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    n_bootstrap<span class="op">=</span><span class="dv">1000</span>,</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    bootstrap_alpha<span class="op">=</span><span class="fl">0.05</span>,</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    random_state<span class="op">=</span><span class="dv">42</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>detector.fit(X, y, t, p<span class="op">=</span>t.mean())</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Get significant moderators</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>feature_names <span class="op">=</span> [<span class="ss">f"X</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(X.shape[<span class="dv">1</span>])]</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> detector.get_significant_variables(feature_names)</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Detected moderators: </span><span class="sc">{</span>results[<span class="st">'significant_features'</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">1988</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>n, p_features, p_het <span class="op">=</span> <span class="dv">1000</span>, <span class="dv">20</span>, <span class="dv">3</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> np.random.randn(n, p_features)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.random.binomial(<span class="dv">1</span>, <span class="fl">0.4</span>, n)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>y_base <span class="op">=</span> X[:, :<span class="dv">3</span>].<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">1</span>, n)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>treatment_effect <span class="op">=</span> <span class="fl">2.0</span> <span class="op">*</span> (<span class="dv">1</span> <span class="op">+</span> X[:, :p_het].<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>))</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> y_base <span class="op">+</span> t <span class="op">*</span> treatment_effect</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize and fit the detector</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>detector <span class="op">=</span> HTELasso(</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="va">None</span>,              <span class="co"># Auto-select regularization via CV</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    random_state<span class="op">=</span><span class="dv">1988</span>,         <span class="co"># Random seed</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    fit_intercept<span class="op">=</span><span class="va">True</span>       <span class="co"># Fit intercept term</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># fit the model</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>detector.fit(X, y, t)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Print detailed summary</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(detector.summary())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="examples" class="level2">
 <h2 class="anchored" data-anchor-id="examples">Examples</h2>
 <p>You can find detailed usage examples in the <code>examples/</code> directory.</p>
 </section>
-<section id="background" class="level2">
-<h2 class="anchored" data-anchor-id="background">Background</h2>
+<section id="technical-details" class="level2">
+<h2 class="anchored" data-anchor-id="technical-details">Technical Details</h2>
 <section id="motivation" class="level3">
 <h3 class="anchored" data-anchor-id="motivation">Motivation</h3>
 <p>When studying heterogeneous treatment effects (HTE) in randomized experiments, researchers often suspect that only a few covariates truly moderate the effect of the treatment. Identifying these <em>moderators</em> is critical — whether for targeting, personalization, or scientific discovery.</p>
-<p>Lasso is a natural tool for this task. Lasso is often the go-to method for selecting a small set of variables “that matter.” This work aims to extend that idea to the context of selecting treatment effect modifiers. It performs automatic variable selection in high-dimensional settings in a simple and transparent way, it scales well, and comes with theoretical guarantees.</p>
+<blockquote class="blockquote">
+<p>Lasso is often the go-to method for selecting a small set of variables “that matter.” This work aims to extend that idea to the context of selecting treatment effect modifiers.</p>
+</blockquote>
+<p>It performs automatic variable selection in high-dimensional settings in a simple and transparent way, it scales well, and comes with theoretical guarantees.</p>
 <p>However, naively applying Lasso directly to treatment effect heterogeneity estimation is problematic:</p>
 <ul>
 <li><strong>Regularization bias</strong>: Lasso shrinks coefficients toward zero, distorting treatment effect estimates.</li>
@@ -174,14 +180,14 @@ window.Quarto = {
 </section>
 <section id="related-work" class="level3">
 <h3 class="anchored" data-anchor-id="related-work">Related Work</h3>
-<p>Researchers have developed several sophisticated methods to address these challenges:</p>
+<p>Researchers have developed several sophisticated methods to address these challenges and still employ the Lasso in this context:</p>
 <ul>
 <li>Imai and Ratkovic (2013) use a modified Lasso with structured penalties and group interactions.</li>
 <li>Nie and Wager (2020) propose the R-learner, a powerful meta-learning approach that relies on orthogonalized loss functions and cross-fitting which can employ lasso.</li>
 <li>Zhao et al.&nbsp;(2022) focus on FDR control by combining weighted outcomes lasso regression with a knockoff filter.</li>
 <li>Bien et al.&nbsp;(2013) propose an interaction lasso which selects treatment variable interactions only if the main term also enters the model.</li>
 </ul>
-<p>While effective, these methods can be complex to implement and explain, as well as tune.</p>
+<p>While effective, these methods can be complex to communicate, implement, and tune.</p>
 <hr>
 </section>
 <section id="method-overview" class="level3">
@@ -194,8 +200,8 @@ window.Quarto = {
 <p>This method is inspired by semiparametric theory and builds most closely on the idea of using weighted outcomes regression to isolate treatment effect variation, as in Zhao et al.&nbsp;(2022). However, unlike their approach, we do not rely on knockoff variables, and we replace standard Lasso with Debiased Lasso, which yields valid standard errors and <span class="math inline">\(p\)</span>-values for each covariate.</p>
 <hr>
 </section>
-<section id="notation-and-setting" class="level3">
-<h3 class="anchored" data-anchor-id="notation-and-setting">Notation and Setting</h3>
+<section id="notation" class="level3">
+<h3 class="anchored" data-anchor-id="notation">Notation</h3>
 <p>Suppose we observe a randomized experiment with <span class="math inline">\(n\)</span> units. For each unit <span class="math inline">\(i = 1, \dots, n\)</span>, we observe:</p>
 <ul>
 <li>outcome <span class="math inline">\(Y_i \in \mathbb{R}\)</span></li>
@@ -227,8 +233,20 @@ Y_i^* = Y_i \cdot \frac{T_i - p}{p(1 - p)}
 <p>Let <span class="math inline">\(\widehat{\beta}_j\)</span> denote the estimated coefficient on covariate <span class="math inline">\(j\)</span>, and <span class="math inline">\(\widehat{\sigma}_j\)</span> its standard error. Then under suitable sparsity and design assumptions:</p>
 <ul>
 <li><span class="math inline">\(\widehat{\beta}_j\)</span> is asymptotically normal,</li>
-<li>the z-statistic <span class="math inline">\(Z_j = \widehat{\beta}_j / \widehat{\sigma}_j\)</span> can be used to test for significance,</li>
-<li>and covariates with significant <span class="math inline">\(Z_j\)</span> values are interpreted as moderators of the treatment effect.</li>
+<li>the t-statistic <span class="math inline">\(t_j = \widehat{\beta}_j / \widehat{\sigma}_j\)</span> can be used to test for significance,</li>
+<li>and covariates with significant <span class="math inline">\(t_j\)</span> values are interpreted as moderators of the treatment effect.</li>
+</ul>
+<hr>
+</section>
+<section id="interpretation" class="level3">
+<h3 class="anchored" data-anchor-id="interpretation">Interpretation</h3>
+<p>Let’s say you want to know whether age or income or gender moderate the effect of an intervention of interest. You apply methodology as above and estimate:</p>
+<p><span class="math display">\[
+\tau(x) = 0.3 \cdot \text{age} + 0 \cdot \text{income} + 1.1 \cdot \text{female}
+\]</span> This tells you:</p>
+<ul>
+<li>The treatment effect is larger for women and older individuals</li>
+<li>But income is not a significant moderator.</li>
 </ul>
 <hr>
 </section>
@@ -237,10 +255,18 @@ Y_i^* = Y_i \cdot \frac{T_i - p}{p(1 - p)}
 <p>The proposed approach overcomes the naive lasso limitations, while maintaining simplicity. It is:</p>
 <ul>
 <li>Simple: No residualization, cross-fitting, or nested learners.</li>
-<li>Valid inference: Debiased Lasso enables hypothesis testing with proper standard errors.</li>
+<li>Valid inference: Debiased Lasso enables hypothesis testing with proper standard errors even when <span class="math inline">\(p&gt;n\)</span>.</li>
 <li>Sparse discovery: Naturally selects a small number of likely moderators.</li>
-<li>Flexible: Can be extended to interactions, group Lasso, or hierarchical penalties.</li>
 </ul>
+<hr>
+</section>
+<section id="limitations" class="level3">
+<h3 class="anchored" data-anchor-id="limitations">Limitations</h3>
+<ul>
+<li>Noise: The method is inefficient because it does not fully utilize the information contained in the treatment indicator beyond its role in constructing the transformed outcome.</li>
+<li>Multiple testing: In settings with many covariates the method is vulnerable to inflated type-1 errors. Consider combining with some type of multiple testing adjustment.</li>
+</ul>
+<hr>
 </section>
 </section>
 <section id="references" class="level2">
