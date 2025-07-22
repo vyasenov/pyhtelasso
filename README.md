@@ -81,7 +81,7 @@ Researchers have developed several sophisticated methods to address these challe
 * Zhao et al. (2022) focus on FDR control by combining weighted outcomes lasso regression with a knockoff filter.
 * Bien et al. (2013) propose an interaction lasso which selects treatment variable interactions only if the main term also enters the model.
 
-While effective, these methods can be complex to communicate, implement, and tune.
+While effective, these methods can be complex to communicate, implement, and tune. You can find a review of some of these approaches in my [blog post here](https://vyasenov.github.io/blog/lasso-heterogeneous-effects.html).
 
 ---
 
@@ -151,6 +151,7 @@ Let’s say you want to know whether age or income or gender moderate the effect
 $$
 \tau(x) = 0.3 \cdot \text{age} + 0 \cdot \text{income} + 1.1 \cdot \text{female}
 $$
+
 This tells you:
 
 * The treatment effect is larger for women and older individuals

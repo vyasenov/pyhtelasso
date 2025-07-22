@@ -187,7 +187,7 @@ window.Quarto = {
 <li>Zhao et al.&nbsp;(2022) focus on FDR control by combining weighted outcomes lasso regression with a knockoff filter.</li>
 <li>Bien et al.&nbsp;(2013) propose an interaction lasso which selects treatment variable interactions only if the main term also enters the model.</li>
 </ul>
-<p>While effective, these methods can be complex to communicate, implement, and tune.</p>
+<p>While effective, these methods can be complex to communicate, implement, and tune. You can find a review of some of these approaches in my <a href="https://vyasenov.github.io/blog/lasso-heterogeneous-effects.html">blog post here</a>.</p>
 <hr>
 </section>
 <section id="method-overview" class="level3">
@@ -243,7 +243,8 @@ Y_i^* = Y_i \cdot \frac{T_i - p}{p(1 - p)}
 <p>Let’s say you want to know whether age or income or gender moderate the effect of an intervention of interest. You apply methodology as above and estimate:</p>
 <p><span class="math display">\[
 \tau(x) = 0.3 \cdot \text{age} + 0 \cdot \text{income} + 1.1 \cdot \text{female}
-\]</span> This tells you:</p>
+\]</span></p>
+<p>This tells you:</p>
 <ul>
 <li>The treatment effect is larger for women and older individuals</li>
 <li>But income is not a significant moderator.</li>
