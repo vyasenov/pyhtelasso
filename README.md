@@ -18,8 +18,8 @@ pip install pyhtelasso
 
 * Detects covariates that moderate treatment effects
 * Debiased Lasso regression for valid inference
-* Simulation tools for benchmarking
-* Visualization tools for interpreting results
+* Easy-to-use API for regression analysis
+* Integration with `pandas` and `scikit-learn`
 
 ## Quick Start
 
