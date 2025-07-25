@@ -15,33 +15,118 @@ class HTELasso:
     2. Run debiased lasso on y* ~ X to identify significant moderators
     """
     
-    def __init__(self, alpha=None, random_state=42, fit_intercept=True):
+    def __init__(self, lambda_val=None, random_state=1988, fit_intercept=True):
         """
         Initialize the detector
         
         Parameters:
         -----------
-        alpha : float, optional
+        lambda_val : float, optional
             Regularization parameter for Lasso. If None, will be selected via CV
         random_state : int
             Random seed for reproducibility
         fit_intercept : bool
             Whether to fit an intercept term
         """
-        self.alpha = alpha
+        self.lambda_val = lambda_val
         self.random_state = random_state
         self.fit_intercept = fit_intercept
         
         self.scaler = StandardScaler()
         self.debiased_lasso = None
         self.y_star = None
+        self.feature_names_ = None  # Store feature names from DataFrame
+        
         self.significant_vars = None
         self.coefficients = None
         self.std_errors = None
         self.confidence_intervals = None
         self.p_values = None
         
-    def transform_outcome(self, y, t):
+    def _validate_data(self, X, y, t):
+        """
+        Validate input data for correctness and quality
+        
+        Parameters:
+        -----------
+        X : array-like, shape (n_obs, n_features)
+            Covariate matrix
+        y : array-like, shape (n_obs,)
+            Outcome variable
+        t : array-like, shape (n_obs,)
+            Treatment indicator
+            
+        Returns:
+        --------
+        X_validated : np.ndarray
+            Validated covariate matrix
+        y_validated : np.ndarray
+            Validated outcome variable
+        t_validated : np.ndarray
+            Validated treatment indicator
+        """
+        # Convert to numpy arrays
+        X = np.array(X)
+        y = np.array(y)
+        t = np.array(t)
+        
+        # Check data types - ensure numeric first
+        if not np.issubdtype(X.dtype, np.number):
+            raise ValueError("Covariate matrix X must contain numeric values")
+        if not np.issubdtype(y.dtype, np.number):
+            raise ValueError("Outcome variable y must contain numeric values")
+        if not np.issubdtype(t.dtype, np.number):
+            raise ValueError("Treatment indicator t must contain numeric values")
+        
+        # Check for missing values
+        if np.any(np.isnan(X)) or np.any(np.isnan(y)) or np.any(np.isnan(t)):
+            raise ValueError("Input data contains missing values (NaN)")
+        
+        if np.any(np.isinf(X)) or np.any(np.isinf(y)) or np.any(np.isinf(t)):
+            raise ValueError("Input data contains infinite values")
+        
+        # Check shapes and dimensions
+        if X.ndim != 2:
+            raise ValueError("Covariate matrix X must be 2-dimensional")
+        if y.ndim != 1:
+            raise ValueError("Outcome variable y must be 1-dimensional")
+        if t.ndim != 1:
+            raise ValueError("Treatment indicator t must be 1-dimensional")
+        
+        # Check that all arrays have the same number of observations
+        n_obs = X.shape[0]
+        if len(y) != n_obs:
+            raise ValueError(f"Number of observations in y ({len(y)}) does not match X ({n_obs})")
+        if len(t) != n_obs:
+            raise ValueError(f"Number of observations in t ({len(t)}) does not match X ({n_obs})")
+        
+        # Check treatment indicator values
+        unique_t = np.unique(t)
+        if len(unique_t) != 2:
+            raise ValueError("Treatment indicator t must contain exactly 2 unique values")
+        if not (0 in unique_t and 1 in unique_t):
+            raise ValueError("Treatment indicator t must contain values 0 and 1")
+        
+        # Check treatment probability
+        p = np.mean(t)
+        if p < 0.1 or p > 0.9:
+            raise ValueError(f"Treatment probability p = {p:.3f} is outside the valid range [0.1, 0.9]")
+        
+        # Check for constant features (zero variance)
+        feature_vars = np.var(X, axis=0)
+        if np.any(feature_vars == 0):
+            constant_features = np.where(feature_vars == 0)[0]
+            raise ValueError(f"Features {constant_features} have zero variance (constant values)")
+        
+        # Check for reasonable data ranges
+        if np.any(np.abs(X) > 1e10):
+            raise ValueError("Covariate matrix X contains extremely large values (> 1e10)")
+        if np.any(np.abs(y) > 1e10):
+            raise ValueError("Outcome variable y contains extremely large values (> 1e10)")
+        
+        return X, y, t
+    
+    def _transform_outcome(self, y, t):
         """
         Transform the outcome variable according to: y* = y * (t - p) / (p * (1 - p))
         where p is calculated as the mean of t
@@ -80,11 +165,11 @@ class HTELasso:
         
         Parameters:
         -----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_obs, n_features)
             Covariate matrix
-        y : array-like, shape (n_samples,)
+        y : array-like, shape (n_obs,)
             Outcome variable
-        t : array-like, shape (n_samples,)
+        t : array-like, shape (n_obs,)
             Treatment indicator
             
         Returns:
@@ -92,13 +177,15 @@ class HTELasso:
         self : object
             Returns self for method chaining
         """
-        # Convert to numpy arrays
-        X = np.array(X)
-        y = np.array(y)
-        t = np.array(t)
+        # Store feature names if X is a DataFrame
+        if hasattr(X, 'columns'):
+            self.feature_names_ = X.columns.tolist()
+        
+        # Validate input data
+        X, y, t = self._validate_data(X, y, t)
         
         # Transform outcome
-        self.y_star = self.transform_outcome(y, t)
+        self.y_star = self._transform_outcome(y, t)
         
         # Standardize features
         X_scaled = self.scaler.fit_transform(X)
@@ -116,7 +203,7 @@ class HTELasso:
         # Extract results
         self.coefficients = self.debiased_lasso.coef_
         self.std_errors = self.debiased_lasso.coef_stderr_
-        ci_alpha = 0.05 if self.alpha is None else self.alpha
+        ci_alpha = 0.05 if self.lambda_val is None else self.lambda_val
         ci_lower, ci_upper = self.debiased_lasso.coef__interval(alpha=ci_alpha)
         self.confidence_intervals = np.column_stack([ci_lower, ci_upper])
         
@@ -129,13 +216,13 @@ class HTELasso:
         
         return self
     
-    def predict_heterogeneity(self, X):
+    def predict(self, X):
         """
         Predict heterogeneity scores for new data
         
         Parameters:
         -----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_obs, n_features)
             Covariate matrix
             
         Returns:
@@ -145,9 +232,18 @@ class HTELasso:
         """
         if self.debiased_lasso is None:
             raise ValueError("Model not fitted yet. Call fit() first.")
+        
+        # Store original input type for return
+        is_dataframe = hasattr(X, 'index')
+        original_index = X.index if is_dataframe else None
             
         X_scaled = self.scaler.transform(X)
-        return self.debiased_lasso.predict(X_scaled)
+        predictions = self.debiased_lasso.predict(X_scaled)
+        
+        # Return pandas Series if input was DataFrame
+        if is_dataframe:
+            return pd.Series(predictions, index=original_index)
+        return predictions
     
     def summary(self, feature_names=None, alpha=None):
         """
@@ -156,7 +252,7 @@ class HTELasso:
         Parameters:
         -----------
         feature_names : list, optional
-            Names of features
+            Names of features. If None and model was fitted with DataFrame, uses DataFrame column names
         alpha : float, optional
             Significance level
             
@@ -169,9 +265,12 @@ class HTELasso:
             raise ValueError("Model not fitted yet. Call fit() first.")
             
         if alpha is None:
-            alpha = 0.05 if self.alpha is None else self.alpha
+            alpha = 0.05 if self.lambda_val is None else self.lambda_val
             
-        if feature_names is None:
+        # Use stored feature names if available, otherwise fall back to default
+        if feature_names is None and self.feature_names_ is not None:
+            feature_names = self.feature_names_
+        elif feature_names is None:
             feature_names = [f"X{i}" for i in range(len(self.coefficients))]
         
         # Calculate t-statistics
@@ -183,18 +282,10 @@ class HTELasso:
         
         # Format the output
         output = []
-        output.append("=" * 80)
-        output.append("Treatment Effect Heterogeneity Detection Results")
-        output.append("=" * 80)
-        output.append("")
-        
+
         # Model info
-        output.append(f"Number of Observations: {len(self.y_star)}")
-        output.append(f"Total Number of Features: {len(self.coefficients)}")
-        output.append(f"Number of Active Variables: {len(active_indices)}")
-        output.append(f"Number of Significant Moderators: {np.sum(self.p_values < alpha)}")
         alpha_value = self.debiased_lasso.selected_alpha_ if self.debiased_lasso.selected_alpha_ is not None else self.debiased_lasso.alpha
-        output.append(f"Tuning Parameter alpha: {alpha_value:.3f}")
+        output.append(f"Tuning Parameter lambda: {alpha_value:.3f}")
         output.append("")
 
         # Coefficients table (only active variables)

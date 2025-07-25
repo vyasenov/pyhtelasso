@@ -3,10 +3,10 @@
 Example usage of pyhtelasso package
 
 This example demonstrates:
-1. Basic usage of TreatmentHeterogeneityDetector
+1. Basic usage of HTELasso
 2. Data simulation with heterogeneous treatment effects
 3. Model fitting and result interpretation
-4. Performance evaluation
+4. Performance evaluation with pandas DataFrames
 """
 
 import sys
@@ -71,29 +71,49 @@ def simulate_data(n=1000, p_features=20, p_het=5, treatment_prob=0.5,
     
     return X, y, t, true_moderators
 
-# Simulate data with heterogeneous treatment effects
-
+####################
+#################### # Simulate data with heterogeneous treatment effects
+####################
 X, y, t, true_moderators = simulate_data(
     n=1000, p_features=20, p_het=3, 
     treatment_prob=0.4, random_state=42
 )
 
-# Create feature names
+# Create pandas DataFrame for better feature name handling
 feature_names = [f"X{i}" for i in range(X.shape[1])]
+X_df = pd.DataFrame(X, columns=feature_names)
+y_series = pd.Series(y, name='outcome')
+t_series = pd.Series(t, name='treatment')
 
-# Initialize the heterogeneity detector
+print("Data shape:", X_df.shape)
+print("Treatment probability:", t_series.mean())
+print("True moderators:", true_moderators)
+print("\n" *5)
+
+####################
+#################### # Initialize the heterogeneity detector
+####################
+
 detector = HTELasso(
-    alpha=None,              # Auto-select regularization via CV
+    lambda_val=None,         # Auto-select regularization via CV
     random_state=42,         # Random seed
     fit_intercept=True       # Fit intercept term
 )
 
-print("Fitting HTELasso...")
-detector.fit(X, y, t)
+detector.fit(X_df, y_series, t_series)
 
+####################
+#################### Print results
+####################
 
-# Print statsmodels-like summary
-print("\n" + "="*80)
-print("REGRESSION SUMMARY")
-print("="*80)
-print(detector.summary(feature_names))
+print(detector.summary())
+print("\n" *5)
+
+####################
+#################### Predict treatment effects
+####################
+
+predictions = detector.predict(X_df)
+print("Prediction type:", type(predictions))
+print("First 5 predictions:")
+print(predictions.head())

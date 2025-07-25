@@ -23,13 +23,13 @@ def read_requirements():
 
 setup(
     name="pyhtelasso",
-    version="0.1.0",
+    version="0.2.0",
     author="Vasco Yasenov",
     author_email="yasenov@gmail.com",
     description="A Python package for detecting treatment effect heterogeneity using debiased lasso",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/pyhtelasso",
+    url="https://github.com/vyasenov/pyhtelasso",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -64,8 +64,8 @@ setup(
     zip_safe=False,
     keywords="causal inference, treatment effects, heterogeneity, lasso, debiased lasso, econometrics",
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/pyhtelasso/issues",
-        "Source": "https://github.com/yourusername/pyhtelasso",
-        "Documentation": "https://github.com/yourusername/pyhtelasso#readme",
+        "Bug Reports": "https://github.com/vyasenov/pyhtelasso/issues",
+        "Source": "https://github.com/vyasenov/pyhtelasso",
+        "Documentation": "https://github.com/vyasenov/pyhtelasso#readme",
     },
 )
