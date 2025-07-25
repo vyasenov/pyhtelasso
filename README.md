@@ -38,8 +38,8 @@ y = y_base + t * treatment_effect
 
 # Initialize and fit the detector
 detector = HTELasso(
-    alpha=None,              # Auto-select regularization via CV
-    random_state=1988,         # Random seed
+    lambda_val=None,         # Auto-select regularization via CV
+    random_state=1988,       # Random seed
     fit_intercept=True       # Fit intercept term
 )
 
